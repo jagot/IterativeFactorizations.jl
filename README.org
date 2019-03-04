@@ -1,0 +1,6 @@
+#+TITLE: MatrixFactorizations.jl
+#+AUTHOR: Stefanos Carlström
+#+EMAIL: stefanos.carlstrom@gmail.com
+
+A small library that permits the usage of [[https://github.com/JuliaMath/IterativeSolvers.jl][IterativeSolvers.jl]] as
+reusable matrix factorizations.
