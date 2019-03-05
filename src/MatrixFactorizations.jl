@@ -33,11 +33,8 @@ function IterativeFactorization(A::M,
                                 x::X=zeros(eltype(A), size(A, 2)),
                                 b::B=similar(x);
                                 tol=√(eps(real(eltype(b)))),
+                                prec = preconditioner(A),
                                 kwargs...) where {M<:AbstractMatrix,X,B}
-    prec = preconditioner(A)
-    # prec = aspreconditioner(ruge_stuben(sparse(A)))
-    # prec = Identity()
-
     iterator,b = if isposdef(A)
         iterator = cg_iterator!(x, A, b, prec; tol=tol, initially_zero=iszero(x), kwargs...)
         iterator,iterator.r
@@ -89,7 +86,7 @@ function LinearAlgebra.ldiv!(x, A::IterativeFactorization, b; verbosity=0)
     copyto!(A.b, b)
     reset_iterator!(iterator, A.tol)
 
-    verbosity > 0 && println("Initial residual: $(getscalarresidual(iterator))")
+    verbosity > 1 && println("Initial residual: $(getscalarresidual(iterator))")
 
     ii = 0
     for (iteration,item) in enumerate(iterator)
