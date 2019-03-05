@@ -10,7 +10,6 @@ using SparseArrays
 const ConjugateGradient = Union{CGIterable,PCGIterable}
 
 LinearAlgebra.isposdef(T::Union{Tridiagonal,SymTridiagonal}) = isposdef(Matrix(T))
-# isskewhermitian(A::M) where {M<:AbstractMatrix} = A' == -A
 
 mutable struct IterativeFactorization{Iterator,X,B,T}
     iterator::Iterator
@@ -76,14 +75,12 @@ function reset_iterator!(it::It, tol::T) where {It<:GMRESIterable, T}
     initially_zero=iszero(it.x)
     it.mv_products = initially_zero ? 0 : 1
 
-    it.arnoldi.V .= false
-    it.arnoldi.H .= false
-
     β = IterativeSolvers.init!(it.arnoldi, it.x, it.b, it.Pl, it.Ax,
                                initially_zero=initially_zero)
     it.residual.current = β
     IterativeSolvers.init_residual!(it.residual, β)
     it.reltol = tol * β
+    it.β = β
 end
 
 function LinearAlgebra.ldiv!(x, A::IterativeFactorization, b; verbosity=0)
@@ -96,7 +93,7 @@ function LinearAlgebra.ldiv!(x, A::IterativeFactorization, b; verbosity=0)
 
     ii = 0
     for (iteration,item) in enumerate(iterator)
-        iterator.mv_products += 1
+        iterator isa ConjugateGradient && (iterator.mv_products += 1)
         verbosity > 1 && println("#$iteration: $(getscalarresidual(iterator))")
         ii += 1
     end
