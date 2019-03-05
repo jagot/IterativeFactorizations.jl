@@ -103,6 +103,9 @@ function LinearAlgebra.ldiv!(x, A::IterativeFactorization, b; verbosity=0)
     x
 end
 
-export IterativeFactorization
+factorization(A::AbstractMatrix;kwargs...) = IterativeFactorization(A; kwargs...)
+factorization(A::SymTridiagonal;kwargs...) = factorize(A)
+
+export IterativeFactorization, factorization
 
 end # module
