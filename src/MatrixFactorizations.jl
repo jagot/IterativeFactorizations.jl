@@ -27,16 +27,18 @@ getscalarresidual(it::GMRESIterable) = it.residual.current
 
 preconditioner(Pl::P) where {P<:AbstractMatrix} =
     aspreconditioner(ruge_stuben(sparse(Pl)))
-preconditioner(Pl::SymTridiagonal) = factorize(Pl)
+preconditioner(Pl::Union{Diagonal,SymTridiagonal}) = factorize(Pl)
 
 function IterativeFactorization(A::M,
                                 x::X=zeros(eltype(A), size(A, 2)),
                                 b::B=similar(x);
                                 tol=√(eps(real(eltype(b)))),
-                                prec = preconditioner(A),
-                                kwargs...) where {M<:AbstractMatrix,X,B}
-    iterator,b = if isposdef(A)
-        iterator = cg_iterator!(x, A, b, prec; tol=tol, initially_zero=iszero(x), kwargs...)
+                                prec=preconditioner(A),
+                                isposdefA=isposdef(A),
+                                kwargs...) where {M,X,B}
+    iterator,b = if isposdefA
+        iterator = cg_iterator!(x, A, b, prec;
+                                tol=tol, initially_zero=iszero(x), kwargs...)
         iterator,iterator.r
     else
         iterator = gmres_iterable!(x, A, b; Pl=prec, tol=tol,
