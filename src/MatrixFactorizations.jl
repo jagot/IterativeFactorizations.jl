@@ -16,6 +16,7 @@ mutable struct IterativeFactorization{Iterator,X,B,T}
     x::X # Solution vector
     b::B # Right-hand side vector
     tol::T
+    verbosity::Int
 end
 
 Base.size(A::IterativeFactorization) = (length(A.b), length(A.x))
@@ -35,18 +36,21 @@ function IterativeFactorization(A::M,
                                 tol=√(eps(real(eltype(b)))),
                                 prec=preconditioner(A),
                                 isposdefA=isposdef(A),
+                                verbosity=0,
                                 kwargs...) where {M,X,B}
     iterator,b = if isposdefA
+        verbosity > 0 && println("Positive-definite -> Conjugate-gradient")
         iterator = cg_iterator!(x, A, b, prec;
                                 tol=tol, initially_zero=iszero(x), kwargs...)
         iterator,iterator.r
     else
+        verbosity > 0 && println("General -> GMRES")
         iterator = gmres_iterable!(x, A, b; Pl=prec, tol=tol,
                                    initially_zero=iszero(x), kwargs...)
         iterator,iterator.b
     end
 
-    IterativeFactorization(iterator, x, b, tol)
+    IterativeFactorization(iterator, x, b, tol, verbosity)
 end
 
 update_preconditioner!(A::IterativeFactorization, Pl::P) where {P<:AbstractMatrix} =
@@ -82,26 +86,41 @@ function reset_iterator!(it::It, tol::T) where {It<:GMRESIterable, T}
     it.β = β
 end
 
-function LinearAlgebra.ldiv!(x, A::IterativeFactorization, b; verbosity=0)
+function _ldiv!(A::IterativeFactorization)
     iterator = A.iterator
-    copyto!(A.x, x)
-    copyto!(A.b, b)
     reset_iterator!(iterator, A.tol)
 
-    verbosity > 1 && println("Initial residual: $(getscalarresidual(iterator))")
+    A.verbosity > 1 && println("Initial residual: $(getscalarresidual(iterator))")
 
     ii = 0
     for (iteration,item) in enumerate(iterator)
         iterator isa ConjugateGradient && (iterator.mv_products += 1)
-        verbosity > 1 && println("#$iteration: $(getscalarresidual(iterator))")
+        A.verbosity > 1 && println("#$iteration: $(getscalarresidual(iterator))")
         ii += 1
     end
-    verbosity > 0 && println("Solution converged: ",
-                            IterativeSolvers.converged(iterator) ? "yes" : "no",
-                            ", #iterations: ", ii, "/", iterator.maxiter,
-                            ", residual: ", getscalarresidual(iterator))
+    A.verbosity > 0 && println("Solution converged: ",
+                              IterativeSolvers.converged(iterator) ? "yes" : "no",
+                              ", #iterations: ", ii, "/", iterator.maxiter,
+                              ", residual: ", getscalarresidual(iterator))
+end
 
-    copyto!(x, iterator.x)
+function LinearAlgebra.ldiv!(A::IterativeFactorization, b)
+    copyto!(A.x, b)
+    copyto!(A.b, b)
+
+    _ldiv!(A)
+
+    copyto!(b, A.iterator.x)
+    b
+end
+
+function LinearAlgebra.ldiv!(x, A::IterativeFactorization, b)
+    copyto!(A.x, x)
+    copyto!(A.b, b)
+
+    _ldiv!(A)
+
+    copyto!(x, A.iterator.x)
     x
 end
 
