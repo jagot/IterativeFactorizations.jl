@@ -1,4 +1,4 @@
-name = "MatrixFactorizations"
+name = "IterativeFactorizations"
 uuid = "f1b39ad4-3e99-11e9-193e-b3ae8ec46476"
 authors = ["Stefanos Carlström <stefanos.carlstrom@gmail.com>"]
 version = "0.1.0"

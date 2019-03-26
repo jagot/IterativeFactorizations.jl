@@ -1,4 +1,4 @@
-module MatrixFactorizations
+module IterativeFactorizations
 
 using LinearAlgebra
 

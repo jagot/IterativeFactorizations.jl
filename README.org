@@ -1,4 +1,4 @@
-#+TITLE: MatrixFactorizations.jl
+#+TITLE: IterativeFactorizations.jl
 #+AUTHOR: Stefanos Carlström
 #+EMAIL: stefanos.carlstrom@gmail.com
 
