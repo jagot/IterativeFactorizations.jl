@@ -7,6 +7,8 @@ import IterativeSolvers: GMRESIterable, gmres_iterable!
 using AlgebraicMultigrid
 using SparseArrays
 
+using BlockBandedMatrices
+
 const ConjugateGradient = Union{CGIterable,PCGIterable}
 
 LinearAlgebra.isposdef(T::Union{Tridiagonal,SymTridiagonal}) = isposdef(Matrix(T))
@@ -124,8 +126,19 @@ function LinearAlgebra.ldiv!(x, A::IterativeFactorization, b)
     x
 end
 
+to_block_banded_matrix(A::BlockBandedMatrix) = A
+function to_block_banded_matrix(A::BlockSkylineMatrix)
+    m,n = size(A)
+    bs = A.block_sizes
+    l,u = maximum(bs.l),maximum(bs.u)
+    rows,cols = diff.(bs.block_sizes.cumul_sizes)
+    BlockBandedMatrix(A, (rows, cols), (l,u))
+end
+
 factorization(A::AbstractMatrix;kwargs...) = IterativeFactorization(A; kwargs...)
 factorization(A::SymTridiagonal;kwargs...) = factorize(A)
+factorization(A::BlockSkylineMatrix) = qr(to_block_banded_matrix(A))
+LinearAlgebra.factorize(A::BlockSkylineMatrix) = factorization(A)
 
 export IterativeFactorization, factorization
 
