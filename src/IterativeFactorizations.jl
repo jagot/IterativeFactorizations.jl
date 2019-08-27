@@ -97,8 +97,10 @@ function _ldiv!(A::IterativeFactorization)
     ii = 0
     for (iteration,item) in enumerate(iterator)
         iterator isa ConjugateGradient && (iterator.mv_products += 1)
-        A.verbosity > 1 && println("#$iteration: $(getscalarresidual(iterator))")
+        R = getscalarresidual(iterator)
+        A.verbosity > 1 && println("#$iteration: $(R)")
         ii += 1
+        (isnan(R) || !isfinite(R)) && break
     end
     A.verbosity > 0 && println("Solution converged: ",
                               IterativeSolvers.converged(iterator) ? "yes" : "no",
