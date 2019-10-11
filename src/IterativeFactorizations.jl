@@ -51,6 +51,7 @@ function IterativeFactorization(A::M,
                                    initially_zero=iszero(x), kwargs...)
         iterator,iterator.b
     end
+    verbosity > 0 && println("Tolerance: $(tol), max #iteration: $(iterator.maxiter)")
 
     IterativeFactorization(iterator, x, b, tol, verbosity)
 end
