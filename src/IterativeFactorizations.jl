@@ -134,8 +134,10 @@ function to_block_banded_matrix(A::BlockSkylineMatrix)
     m,n = size(A)
     bs = A.block_sizes
     l,u = maximum(bs.l),maximum(bs.u)
-    rows,cols = diff.(bs.block_sizes.cumul_sizes)
-    BlockBandedMatrix(A, (rows, cols), (l,u))
+    axs = bs.axes
+    rows = diff(vcat(0,axs[1].lasts))
+    cols = diff(vcat(0,axs[2].lasts))
+    BlockBandedMatrix(A, rows, cols, (l,u))
 end
 
 factorization(A::AbstractMatrix;kwargs...) = IterativeFactorization(A; kwargs...)
